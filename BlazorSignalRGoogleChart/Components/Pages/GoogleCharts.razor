@@ -1,0 +1,133 @@
+﻿@page "/chart"
+@rendermode InteractiveServer
+@using BlazorSignalRGoogleChart.Application.PizzaToppings.Queries
+@using BlazorSignalRGoogleChart.Domain.Entities
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
+@using Mediator
+@using System.Text.Json
+@inject IMediator _mediator
+
+
+@* <p>@msg</p> *@
+<div class="row">
+    <div class="col-12">
+        <div id="chart_div"></div>
+    </div>
+    
+</div>
+
+@code{
+    List<PizzaTopping> toppings = [];
+    private HubConnection? hubConnection;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            toppings = await _mediator.Send(new GetToppingsListsQuery());
+            StateHasChanged();
+            var toppingsJson = JsonSerializer.Serialize(toppings);
+            await JSRuntime.InvokeVoidAsync("drawChart", toppingsJson);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/googlecharthub"))
+            .Build();
+
+        hubConnection.On<string>("ReceiveIdPizzaTopping", (id) =>
+        {            
+            LoadChart(id);
+            InvokeAsync(StateHasChanged);            
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async void LoadChart(string toppingsjson)
+    {
+        await JSRuntime.InvokeVoidAsync("drawChart", toppingsjson);
+    }
+
+    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
+
+
+
+
+@* @page "/chart"
+@using BlazorSignalRGoogleChart.Components.Layout
+@layout ChartLayout
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@using BlazorSignalRGoogleChart.Application.PizzaToppings.Queries
+@using BlazorSignalRGoogleChart.Domain.Entities
+@using Mediator
+@using System.Text.Json
+@inject IMediator _mediator
+
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IAsyncDisposable
+
+
+<div class="row">
+    <div class="col-12">
+        <div id="chart_div"></div>
+    </div>    
+</div>
+
+@code {
+    List<PizzaTopping> toppings = [];
+    private HubConnection? hubConnection;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            toppings = await _mediator.Send(new GetToppingsListsQuery());
+            StateHasChanged();
+            var toppingsJson = JsonSerializer.Serialize(toppings);
+            await JSRuntime.InvokeVoidAsync("drawChart", toppingsJson);
+        }
+    } 
+
+    protected override async Task OnInitializedAsync()
+    {       
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/googlecharthub"))
+            .Build();
+
+        hubConnection.On<int>("ReceiveIdPizzaTopping", (toppingsjson) =>
+        {
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+    
+    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}
+
+ *@

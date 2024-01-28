@@ -11,30 +11,6 @@
 @using System.Text.Json
 @inject IMediator _mediator
 
-<div class="form-group">
-    <label>
-        User:
-        <input @bind="userInput" />
-    </label>
-</div>
-<div class="form-group">
-    <label>
-        Message:
-        <input @bind="messageInput" size="50" />
-    </label>
-</div>
-<button @onclick="Send" disabled="@(!IsConnected)">Send</button>
-
-<hr>
-
-<ul id="messagesList">
-    @foreach (var message in messages)
-    {
-        <li>@message</li>
-    }
-</ul>
-
-<hr />
 <div class="row">
     <div class="col-7">
         <div id="chart_div"></div>
@@ -89,22 +65,24 @@
             StateHasChanged();
             var toppingsJson = JsonSerializer.Serialize(toppings);
             await JSRuntime.InvokeVoidAsync("drawChart", toppingsJson);
-            
+
             await hubConnection.SendAsync("AddSlidesSignalR", toppingsJson);
         }
-
     }
 
     private async void RemoveSlice(int id)
     {
-        int dd = await _mediator.Send(new RemoveSliceCommand() { PizzaToppingId = id });
-        toppings = await _mediator.Send(new GetToppingsListsQuery());
-        StateHasChanged();
-        var toppingsJson = JsonSerializer.Serialize(toppings);
-        await JSRuntime.InvokeVoidAsync("drawChart", toppingsJson);
+        if (hubConnection is not null)
+        {
+            await _mediator.Send(new RemoveSliceCommand() { PizzaToppingId = id });
+            toppings = await _mediator.Send(new GetToppingsListsQuery());
+            StateHasChanged();
+            var toppingsJson = JsonSerializer.Serialize(toppings);
+            await JSRuntime.InvokeVoidAsync("drawChart", toppingsJson);
+
+            await hubConnection.SendAsync("AddSlidesSignalR", toppingsJson);           
+        }        
     }
-
-
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,32 +97,7 @@
         await hubConnection.StartAsync();
     }
 
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     hubConnection = new HubConnectionBuilder()
-    //         .WithUrl(Navigation.ToAbsoluteUri("/chathub"))
-    //         .Build();
-
-    //     hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
-    //     {
-    //         var encodedMsg = $"{user}: {message}";
-    //         messages.Add(encodedMsg);
-    //         InvokeAsync(StateHasChanged);
-    //     });
-
-    //     await hubConnection.StartAsync();
-    // }
-
-    private async Task Send()
-    {
-        if (hubConnection is not null)
-        {
-            await hubConnection.SendAsync("SendMessage", userInput, messageInput);
-        }
-    }
-
-    public bool IsConnected =>
-        hubConnection?.State == HubConnectionState.Connected;
+    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
 
     public async ValueTask DisposeAsync()
     {

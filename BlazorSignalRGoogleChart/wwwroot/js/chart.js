@@ -11,16 +11,12 @@ window.drawChart = (toppingsJson) => {
         data.addColumn('string', 'Topping');
         data.addColumn('number', 'Slices');
 
-        // Convert toppings to the format expected by addRows
         var rows = toppings.map(topping => [topping.Topping, topping.Slices]);
         data.addRows(rows);
 
         var options = {
-            'title': 'How Much Pizza I Ate Last Night',
-            'width': 800,
-            'height': 300
+            'title': 'How Much Pizza I Ate Last Night'            
         };
-
         var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
         chart.draw(data, options);
     }

@@ -1,42 +1,46 @@
 ﻿@page "/"
-@using Microsoft.AspNetCore.SignalR.Client
-@inject NavigationManager Navigation
-@implements IAsyncDisposable
 
-@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject IMediator _mediator
+@using Microsoft.AspNetCore.SignalR.Client
 @using BlazorSignalRGoogleChart.Application.PizzaToppings.Queries
 @using BlazorSignalRGoogleChart.Domain.Entities
 @using Mediator
 @using System.Text.Json
-@inject IMediator _mediator
+@implements IAsyncDisposable
 
-<div class="row">
-    <div class="col-7">
-        <div id="chart_div"></div>
+<div class="container px-4 py-4">
+    <h2 class="pb-2 border-bottom">Goolgle Charts</h2>
+    <div class="row mb-3 text-center px-4 py-4">        
+        <div class="col-sm-6 col-lg-8 themed-grid-col d-flex justify-content-center align-items-center">
+            
+            <div id="chart_div" style="width:600px; height:400px;"></div>
+        </div>
+        <div class="col-sm-6 col-lg-4 themed-grid-col">
+            <ul class="list-group">
+                @foreach (var item in toppings)
+                {
+                    <li class="list-group-item">
+                        <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                            <button type="button" class="@item.ColorBtn" disabled title="NameTopping">@item.Topping</button>
+                            <button @onclick="@(e => RemoveSlice(item.Id))" type="button" class="btn btn-warning" title="Remove Slice"><i class="fa-solid fa-minus"></i></button>
+                            <button @onclick="@(e => AddSlice(item.Id))" type="button" class="btn btn-success" title="Add Slice">
+                                <i class="fa-solid fa-plus"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    @item.Slices+
+                                    <span class="visually-hidden">unread messages</span>
+                                </span>
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
     </div>
-    <div class="col-5">
-        <ul class="list-group">
-            @foreach (var item in toppings)
-            {
-                <li class="list-group-item">
-                    <div class="btn-group" role="group" aria-label="Basic mixed styles example">
-                        <button type="button" class="@item.ColorBtn" disabled title="NameTopping">@item.Topping</button>
-                        <button @onclick="@(e => RemoveSlice(item.Id))" type="button" class="btn btn-warning" title="RemoveSlice"><i class="fa-solid fa-minus"></i></button>
-                        <button @onclick="@(e => AddSlice(item.Id))" type="button" class="btn btn-success" title="AddSlice">
-                            <i class="fa-solid fa-plus"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                @item.Slices+
-                                <span class="visually-hidden">unread messages</span>
-                            </span>
-                        </button>
-                    </div>
-                </li>
-            }
-        </ul>
-    </div>
+    
 </div>
-
 
 @code {
     List<PizzaTopping> toppings = [];

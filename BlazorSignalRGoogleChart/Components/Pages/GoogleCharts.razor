@@ -13,14 +13,11 @@
 @inject IMediator _mediator
 
 
-@* <p>@msg</p> *@
-<div class="row">
-    <div class="col-12">
-        <div id="chart_div"></div>
-    </div>
-    
+<h1 class="text-center">Real-time chart update panel</h1>
+<div id="chart_div" style="width: 900px; height: 500px;">
+   
 </div>
-
+    
 @code{
     List<PizzaTopping> toppings = [];
     private HubConnection? hubConnection;
